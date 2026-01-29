@@ -1,5 +1,6 @@
 /**
- * Text tool composable for adding text elements on canvas
+ * Text tool composable for adding text elements on canvas.
+ * Creates a text element and automatically enters edit mode for immediate input.
  */
 
 import type { PointerEvent } from 'leafer-ui';
@@ -12,16 +13,18 @@ import { addElementToContainer, convertToLocalCoordinates } from '@/utils/elemen
 export function useTextTool(tree: Tree, store: ReturnType<typeof useCanvasStore>) {
   function handleTap(e: PointerEvent) {
     if (!tree) return;
+
     const point = e.getPagePoint();
     const localCoords = convertToLocalCoordinates(tree, point.x, point.y);
 
     const text = new Text({
       x: localCoords.x,
       y: localCoords.y,
-      text: '双击编辑文本',
+      text: '',
       fontSize: store.fontSize,
       fill: store.textColor,
-      editable: true
+      editable: true,
+      padding: [4, 8]
     });
 
     addElementToContainer(tree, text);
@@ -34,7 +37,15 @@ export function useTextTool(tree: Tree, store: ReturnType<typeof useCanvasStore>
     });
 
     store.setTool(TOOL_TYPES.SELECT);
-    store.selectObject(id);
+
+    const app = store.appInstance;
+    if (app?.editor) {
+      app.editor.select(text);
+
+      setTimeout(() => {
+        text.emit('double_tap', { target: text });
+      }, 50);
+    }
   }
 
   return {

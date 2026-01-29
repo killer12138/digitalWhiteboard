@@ -101,6 +101,47 @@ export function useLayerControl() {
     return index > 0;
   }
 
+  function toggleVisibility(element: LeaferElement): boolean {
+    if (!element) return false;
+    element.visible = !element.visible;
+    addSnapshot();
+    return element.visible ?? true;
+  }
+
+  function toggleLock(element: LeaferElement): boolean {
+    if (!element) return false;
+    element.editable = !element.editable;
+    addSnapshot();
+    return !(element.editable ?? true);
+  }
+
+  function isVisible(element: LeaferElement): boolean {
+    return element?.visible ?? true;
+  }
+
+  function isLocked(element: LeaferElement): boolean {
+    return !(element?.editable ?? true);
+  }
+
+  function reorderElement(element: LeaferElement, newIndex: number): boolean {
+    if (!element?.parent) return false;
+
+    const parent = element.parent;
+    const children = parent.children as UI[];
+    const currentIndex = children.indexOf(element as UI);
+
+    if (currentIndex === -1 || newIndex < 0 || newIndex >= children.length) {
+      return false;
+    }
+
+    if (currentIndex === newIndex) return true;
+
+    parent.remove(element);
+    parent.addAt(element, newIndex);
+    addSnapshot();
+    return true;
+  }
+
   return {
     bringForward,
     sendBackward,
@@ -109,6 +150,11 @@ export function useLayerControl() {
     canBringForward,
     canSendBackward,
     getElementIndex,
-    getParentChildrenCount
+    getParentChildrenCount,
+    toggleVisibility,
+    toggleLock,
+    isVisible,
+    isLocked,
+    reorderElement
   };
 }

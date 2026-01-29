@@ -82,8 +82,8 @@
 
         <main class="flex-1 relative overflow-hidden">
           <Canvas />
-          <div class="absolute bottom-4 right-4 z-40">
-            <ZoomControls />
+          <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-40">
+            <BottomToolbar />
           </div>
         </main>
 
