@@ -1,11 +1,12 @@
 <script setup lang="ts">
-  import type { Group } from 'leafer-ui';
+  import type { UI } from 'leafer-ui';
   import { App } from 'leafer-ui';
   import { inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
   import { useBoardConstraint } from '@/composables/features/useBoardConstraint';
   import { useContextMenu } from '@/composables/features/useContextMenu';
   import { useDeleteTool } from '@/composables/features/useDeleteTool';
   import { useGroupTool } from '@/composables/features/useGroupTool';
+  import { getGuidelinesInstance } from '@/composables/features/useGuidelines';
   import { useElementPopover } from '@/composables/state/useElementPopover';
   import { useCanvasTools } from '@/composables/useCanvasTools';
   import { canvasConfig } from '@/config/canvas';
@@ -30,12 +31,17 @@
   const contextMenu = useContextMenu();
   const groupTool = useGroupTool();
   const boardConstraint = useBoardConstraint();
+  const guidelinesManager = getGuidelinesInstance();
 
   let app: App | null = null;
   let ruler: Ruler | null = null;
   let deleteToolCleanup: (() => void) | null = null;
   let zoomKeyboardCleanup: (() => void) | null = null;
   let boardConstraintCleanup: (() => void) | null = null;
+
+  const isDraggingFromRuler = ref(false);
+  const dragGuidelineType = ref<'horizontal' | 'vertical' | null>(null);
+  const dragGuidelinePreviewPos = ref(0);
 
   const handleContextMenu = (event: MouseEvent) => {
     event.preventDefault();
@@ -57,6 +63,7 @@
       const lastSnapshot = historyStore.snapshots[historyStore.currentIndex];
       if (lastSnapshot) {
         store.fromSnapshot(lastSnapshot);
+        store.setZoom(1);
       }
     }
   };
@@ -69,12 +76,12 @@
     if (selectedElements.length !== 1) return;
 
     const selectedElement = selectedElements[0];
-    if (selectedElement && groupTool.isGroup(selectedElement)) {
-      groupTool.enterGroupEdit(selectedElement as Group);
+    if (selectedElement && groupTool.isGroup(selectedElement as any)) {
+      groupTool.enterGroupEdit(selectedElement as any);
 
       const children = selectedElement.children || [];
       if (children.length > 0) {
-        currentApp.editor.select(children[0]);
+        currentApp.editor.select(children[0] as UI);
       }
     }
   };
@@ -89,6 +96,74 @@
         groupTool.exitGroupEdit();
       }
     }
+  };
+
+  const handleRulerMouseDown = (event: MouseEvent) => {
+    if (!canvasContainer.value || !store.rulerEnabled) return;
+
+    const rect = canvasContainer.value.getBoundingClientRect();
+    const rulerSize = canvasConfig.ruler.ruleSize;
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    if (y < rulerSize && x >= rulerSize) {
+      isDraggingFromRuler.value = true;
+      dragGuidelineType.value = 'horizontal';
+      dragGuidelinePreviewPos.value = y;
+    } else if (x < rulerSize && y >= rulerSize) {
+      isDraggingFromRuler.value = true;
+      dragGuidelineType.value = 'vertical';
+      dragGuidelinePreviewPos.value = x;
+    }
+
+    if (isDraggingFromRuler.value) {
+      document.addEventListener('mousemove', handleRulerDrag);
+      document.addEventListener('mouseup', handleRulerMouseUp);
+    }
+  };
+
+  const handleRulerDrag = (event: MouseEvent) => {
+    if (!isDraggingFromRuler.value || !canvasContainer.value) return;
+
+    const rect = canvasContainer.value.getBoundingClientRect();
+    const currentApp = store.appInstance;
+    const scale = (currentApp?.tree.scale as number) || 1;
+
+    if (dragGuidelineType.value === 'horizontal') {
+      const y = event.clientY - rect.top;
+      dragGuidelinePreviewPos.value = y / scale;
+    } else if (dragGuidelineType.value === 'vertical') {
+      const x = event.clientX - rect.left;
+      dragGuidelinePreviewPos.value = x / scale;
+    }
+  };
+
+  const handleRulerMouseUp = (event: MouseEvent) => {
+    if (!isDraggingFromRuler.value || !canvasContainer.value) return;
+
+    const rect = canvasContainer.value.getBoundingClientRect();
+    const currentApp = store.appInstance;
+    const scale = (currentApp?.tree.scale as number) || 1;
+    const rulerSize = canvasConfig.ruler.ruleSize;
+
+    if (dragGuidelineType.value === 'horizontal') {
+      const y = event.clientY - rect.top;
+      if (y > rulerSize) {
+        guidelinesManager.addGuideline('horizontal', (y - rulerSize) / scale);
+      }
+    } else if (dragGuidelineType.value === 'vertical') {
+      const x = event.clientX - rect.left;
+      if (x > rulerSize) {
+        guidelinesManager.addGuideline('vertical', (x - rulerSize) / scale);
+      }
+    }
+
+    isDraggingFromRuler.value = false;
+    dragGuidelineType.value = null;
+    dragGuidelinePreviewPos.value = 0;
+
+    document.removeEventListener('mousemove', handleRulerDrag);
+    document.removeEventListener('mouseup', handleRulerMouseUp);
   };
 
   onMounted(() => {
@@ -121,7 +196,7 @@
     store.setAppInstance(app);
 
     const snap = new Snap(app, {
-      attachEvents: ['move', 'scale'],
+      attachEvents: [...canvasConfig.snap.attachEvents] as ('move' | 'scale')[],
       snapSize: canvasConfig.snap.snapSize,
       showDistanceLabels: canvasConfig.snap.showDistanceLabels,
       showLine: canvasConfig.snap.showLine,
@@ -145,6 +220,8 @@
       fontSize: canvasConfig.ruler.fontSize,
       unit: canvasConfig.ruler.unit
     });
+
+    guidelinesManager.initialize(app);
 
     app.tree.on('double_tap', handleDoubleClick);
 
@@ -171,10 +248,21 @@
     }
   );
 
+  watch(
+    () => store.guidelinesEnabled,
+    enabled => {
+      guidelinesManager.setGuidelinesVisibility(enabled);
+    }
+  );
+
   onBeforeUnmount(() => {
     zoomKeyboardCleanup?.();
     deleteToolCleanup?.();
     boardConstraintCleanup?.();
+    guidelinesManager.cleanup();
+
+    document.removeEventListener('mousemove', handleRulerDrag);
+    document.removeEventListener('mouseup', handleRulerMouseUp);
 
     ruler = null;
 
@@ -191,6 +279,7 @@
     class="w-full h-full relative overflow-hidden bg-white"
     @contextmenu="handleContextMenu"
     @click="handleCanvasClick"
+    @mousedown="handleRulerMouseDown"
   >
     <div
       v-if="groupTool.isEditingGroup()"
@@ -218,6 +307,17 @@
       @bring-to-front="contextMenu.handleBringToFront"
       @send-to-back="contextMenu.handleSendToBack"
       @select-all="contextMenu.handleSelectAll"
+    />
+
+    <div
+      v-if="isDraggingFromRuler && dragGuidelineType === 'horizontal'"
+      class="absolute left-0 right-0 h-px bg-cyan-400 pointer-events-none z-50"
+      :style="{ top: `${dragGuidelinePreviewPos}px` }"
+    />
+    <div
+      v-if="isDraggingFromRuler && dragGuidelineType === 'vertical'"
+      class="absolute top-0 bottom-0 w-px bg-cyan-400 pointer-events-none z-50"
+      :style="{ left: `${dragGuidelinePreviewPos}px` }"
     />
   </div>
 </template>

@@ -97,10 +97,10 @@
           </span>
         </template>
       </n-tooltip>
-      <n-divider v-if="tool.dividerAfter" vertical class="!mx-1" />
+      <n-divider v-if="tool.dividerAfter" vertical class="mx-1!" />
     </template>
 
-    <n-divider vertical class="!mx-2" />
+    <n-divider vertical class="mx-2!" />
 
     <n-tooltip v-if="zoomOutPlugin" trigger="hover">
       <template #trigger>

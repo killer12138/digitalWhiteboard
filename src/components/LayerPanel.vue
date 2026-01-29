@@ -1,15 +1,24 @@
 /** * Layer panel component for managing canvas elements like Photoshop layers */
 
 <script setup lang="ts">
-  import { computed, ref } from 'vue';
+  import type { DropdownOption } from 'naive-ui';
+  import { computed, h, ref } from 'vue';
+  import IconRenderer from '@/components/IconRenderer.vue';
   import { useLayerControl } from '@/composables/features/useLayerControl';
+  import { useHistory } from '@/plugins/composables/useHistory';
   import { useCanvasStore } from '@/stores/canvas';
 
   const store = useCanvasStore();
   const layerControl = useLayerControl();
+  const { addSnapshot } = useHistory();
 
   const draggedIndex = ref<number | null>(null);
   const dragOverIndex = ref<number | null>(null);
+
+  const contextMenuShow = ref(false);
+  const contextMenuX = ref(0);
+  const contextMenuY = ref(0);
+  const contextMenuLayerId = ref<string | null>(null);
 
   const layers = computed(() => {
     return [...store.objects].reverse().map((obj, index) => {
@@ -33,6 +42,67 @@
     const selectedElement = app.editor.list[0];
     const obj = store.objects.find(o => o.element?.innerId === selectedElement?.innerId);
     return obj?.id ?? null;
+  });
+
+  const contextMenuLayer = computed(() => {
+    if (!contextMenuLayerId.value) return null;
+    return layers.value.find(l => l.id === contextMenuLayerId.value) ?? null;
+  });
+
+  const canBringForward = computed(() => {
+    if (!contextMenuLayer.value?.element) return false;
+    return layerControl.canBringForward(contextMenuLayer.value.element);
+  });
+
+  const canSendBackward = computed(() => {
+    if (!contextMenuLayer.value?.element) return false;
+    return layerControl.canSendBackward(contextMenuLayer.value.element);
+  });
+
+  const contextMenuOptions = computed<DropdownOption[]>(() => {
+    return [
+      {
+        label: '上移一层',
+        key: 'bringForward',
+        disabled: !canBringForward.value,
+        icon: () => h(IconRenderer, { name: 'i-lucide-chevron-up', size: 14 })
+      },
+      {
+        label: '下移一层',
+        key: 'sendBackward',
+        disabled: !canSendBackward.value,
+        icon: () => h(IconRenderer, { name: 'i-lucide-chevron-down', size: 14 })
+      },
+      {
+        label: '置顶',
+        key: 'bringToFront',
+        disabled: !canBringForward.value,
+        icon: () => h(IconRenderer, { name: 'i-lucide-bring-to-front', size: 14 })
+      },
+      {
+        label: '置底',
+        key: 'sendToBack',
+        disabled: !canSendBackward.value,
+        icon: () => h(IconRenderer, { name: 'i-lucide-send-to-back', size: 14 })
+      },
+      { type: 'divider', key: 'd1' },
+      {
+        label: '复制',
+        key: 'copy',
+        icon: () => h(IconRenderer, { name: 'i-lucide-copy', size: 14 })
+      },
+      {
+        label: '粘贴',
+        key: 'paste',
+        icon: () => h(IconRenderer, { name: 'i-lucide-clipboard-paste', size: 14 })
+      },
+      { type: 'divider', key: 'd2' },
+      {
+        label: '删除',
+        key: 'delete',
+        icon: () => h(IconRenderer, { name: 'i-lucide-trash-2', size: 14 })
+      }
+    ];
   });
 
   function getElementName(type: string): string {
@@ -108,8 +178,18 @@
     const sourceLayer = layers.value[draggedIndex.value];
     const targetLayer = layers.value[targetIndex];
 
-    if (sourceLayer && targetLayer) {
-      layerControl.reorderElement(sourceLayer.element, targetLayer.index);
+    if (sourceLayer && targetLayer && sourceLayer.element?.parent) {
+      const parent = sourceLayer.element.parent;
+      const children = parent.children as any[];
+      const sourceTreeIndex = children.indexOf(sourceLayer.element);
+      const targetTreeIndex = children.indexOf(targetLayer.element);
+
+      if (sourceTreeIndex !== -1 && targetTreeIndex !== -1) {
+        parent.remove(sourceLayer.element);
+        const adjustedIndex = sourceTreeIndex < targetTreeIndex ? targetTreeIndex : targetTreeIndex;
+        parent.addAt(sourceLayer.element, adjustedIndex);
+        addSnapshot();
+      }
     }
 
     draggedIndex.value = null;
@@ -119,6 +199,100 @@
   function handleDragEnd() {
     draggedIndex.value = null;
     dragOverIndex.value = null;
+  }
+
+  function handleContextMenu(event: MouseEvent, layerId: string) {
+    event.preventDefault();
+    event.stopPropagation();
+    contextMenuLayerId.value = layerId;
+    contextMenuX.value = event.clientX;
+    contextMenuY.value = event.clientY;
+    contextMenuShow.value = true;
+
+    store.selectObject(layerId);
+  }
+
+  function handleContextMenuSelect(key: string) {
+    const layer = contextMenuLayer.value;
+    if (!layer) return;
+
+    switch (key) {
+      case 'bringForward':
+        layerControl.bringForward(layer.element);
+        break;
+      case 'sendBackward':
+        layerControl.sendBackward(layer.element);
+        break;
+      case 'bringToFront':
+        layerControl.bringToFront(layer.element);
+        break;
+      case 'sendToBack':
+        layerControl.sendToBack(layer.element);
+        break;
+      case 'copy':
+        handleCopyLayer(layer.id);
+        break;
+      case 'paste':
+        handlePasteLayer();
+        break;
+      case 'delete':
+        handleDeleteLayer(layer.id);
+        break;
+    }
+    contextMenuShow.value = false;
+  }
+
+  function handleCopyLayer(layerId: string) {
+    const obj = store.objects.find(o => o.id === layerId);
+    if (!obj?.element) return;
+
+    const jsonData = [obj.element.toJSON()];
+    localStorage.setItem('wl-draw-clipboard', JSON.stringify(jsonData));
+  }
+
+  function handlePasteLayer() {
+    const app = store.appInstance;
+    if (!app?.tree) return;
+
+    const clipboardData = localStorage.getItem('wl-draw-clipboard');
+    if (!clipboardData) return;
+
+    try {
+      const elements = JSON.parse(clipboardData) as Record<string, unknown>[];
+      elements.forEach(elementData => {
+        const offsetElementData = {
+          ...elementData,
+          x: ((elementData.x as number) || 0) + 20,
+          y: ((elementData.y as number) || 0) + 20
+        };
+
+        const element = store.createElementFromData(elementData.tag as string, offsetElementData);
+
+        if (element) {
+          app.tree.add(element);
+          const elementId = `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const elementTag = (elementData.tag as string)?.toLowerCase() || 'rect';
+          store.addObject({
+            id: elementId,
+            type: elementTag as any,
+            element: element as any
+          });
+        }
+      });
+
+      addSnapshot();
+    } catch (error) {
+      console.error('Failed to paste elements:', error);
+    }
+  }
+
+  function handleDeleteLayer(layerId: string) {
+    store.removeObject(layerId);
+    addSnapshot();
+  }
+
+  function handleContextMenuClickOutside() {
+    contextMenuShow.value = false;
   }
 </script>
 
@@ -145,6 +319,7 @@
           !layer.visible ? 'opacity-50' : ''
         ]"
         @click="handleLayerClick(layer.id)"
+        @contextmenu="handleContextMenu($event, layer.id)"
         @dragstart="handleDragStart(index)"
         @dragover="handleDragOver($event, index)"
         @dragleave="handleDragLeave"
@@ -182,5 +357,17 @@
         </span>
       </div>
     </div>
+
+    <n-dropdown
+      :show="contextMenuShow"
+      :x="contextMenuX"
+      :y="contextMenuY"
+      :options="contextMenuOptions"
+      placement="bottom-start"
+      trigger="manual"
+      size="small"
+      @select="handleContextMenuSelect"
+      @clickoutside="handleContextMenuClickOutside"
+    />
   </div>
 </template>

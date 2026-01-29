@@ -2,58 +2,67 @@
  * Utility functions for extracting element properties from canvas objects
  */
 
-import { Line, Text } from 'leafer-ui'
-import type { ArrowType } from '@/components/common/ArrowPicker.vue'
-import { ELEMENT_TYPES, UI_CONSTANTS } from '@/constants'
-import type { CanvasObject } from '@/stores/canvas'
-import { getLineArrowType, getTextFillColor } from '@/utils/typeGuards'
+import { Image, Line, Text } from 'leafer-ui';
+import type { ArrowType } from '@/components/common/ArrowPicker.vue';
+import { ELEMENT_TYPES, UI_CONSTANTS } from '@/constants';
+import type { CanvasObject } from '@/stores/canvas';
+import { getLineArrowType, getTextFillColor } from '@/utils/typeGuards';
 
-const DEFAULT_FILL_COLOR = '#ffffff'
-const DEFAULT_STROKE_COLOR = '#000000'
-const DEFAULT_STROKE_WIDTH = 0
-const DEFAULT_FONT_SIZE = 16
+const DEFAULT_FILL_COLOR = '#ffffff';
+const DEFAULT_STROKE_COLOR = '#000000';
+const DEFAULT_STROKE_WIDTH = 0;
+const DEFAULT_FONT_SIZE = 32;
+const DEFAULT_IMAGE_WIDTH = 100;
+const DEFAULT_IMAGE_HEIGHT = 100;
 
 export interface ElementProps {
-  fillColor: string
-  strokeColor: string
-  strokeWidth: number
-  dashPattern?: number[] | undefined
-  startArrow: ArrowType
-  endArrow: ArrowType
-  textColor?: string
-  fontSize?: number
+  fillColor: string;
+  strokeColor: string;
+  strokeWidth: number;
+  dashPattern?: number[] | undefined;
+  startArrow: ArrowType;
+  endArrow: ArrowType;
+  textColor?: string;
+  fontSize?: number;
+  imageWidth?: number;
+  imageHeight?: number;
 }
 
 function getTextElementProperties(text: Text): { textColor: string; fontSize: number } {
   return {
     textColor: getTextFillColor(text),
-    fontSize: text.fontSize ?? DEFAULT_FONT_SIZE,
-  }
+    fontSize: text.fontSize ?? DEFAULT_FONT_SIZE
+  };
+}
+
+function getImageElementProperties(image: Image): { imageWidth: number; imageHeight: number } {
+  return {
+    imageWidth: typeof image.width === 'number' ? image.width : DEFAULT_IMAGE_WIDTH,
+    imageHeight: typeof image.height === 'number' ? image.height : DEFAULT_IMAGE_HEIGHT
+  };
 }
 
 function getStandardElementProperties(obj: CanvasObject): {
-  strokeColor: string
-  strokeWidth: number
-  dashPattern?: number[] | undefined
-  startArrow: ArrowType
-  endArrow: ArrowType
+  strokeColor: string;
+  strokeWidth: number;
+  dashPattern?: number[] | undefined;
+  startArrow: ArrowType;
+  endArrow: ArrowType;
 } {
-  const strokeColor =
-    typeof obj.element.stroke === 'string' ? obj.element.stroke : DEFAULT_STROKE_COLOR
+  const strokeColor = typeof obj.element.stroke === 'string' ? obj.element.stroke : DEFAULT_STROKE_COLOR;
   const strokeWidth =
-    typeof obj.element.strokeWidth === 'number' ? obj.element.strokeWidth : DEFAULT_STROKE_WIDTH
+    typeof obj.element.strokeWidth === 'number' ? obj.element.strokeWidth : DEFAULT_STROKE_WIDTH;
   const dashPattern =
-    Array.isArray(obj.element.dashPattern) &&
-    obj.element.dashPattern.every((item) => typeof item === 'number')
+    Array.isArray(obj.element.dashPattern) && obj.element.dashPattern.every(item => typeof item === 'number')
       ? (obj.element.dashPattern as number[])
-      : undefined
+      : undefined;
 
-  let startArrow: ArrowType = 'none'
-  let endArrow: ArrowType = UI_CONSTANTS.DEFAULT_END_ARROW
+  let startArrow: ArrowType = 'none';
+  let endArrow: ArrowType = UI_CONSTANTS.DEFAULT_END_ARROW;
 
   if (obj.type === ELEMENT_TYPES.ARROW && obj.element instanceof Line) {
-    startArrow = getLineArrowType(obj.element, 'startArrow')
-    endArrow = getLineArrowType(obj.element, 'endArrow')
+    startArrow = getLineArrowType(obj.element, 'startArrow');
+    endArrow = getLineArrowType(obj.element, 'endArrow');
   }
 
   return {
@@ -61,15 +70,15 @@ function getStandardElementProperties(obj: CanvasObject): {
     strokeWidth,
     dashPattern,
     startArrow,
-    endArrow,
-  }
+    endArrow
+  };
 }
 
 export function getElementProperties(obj: CanvasObject): ElementProps {
-  const fillColor = typeof obj.element.fill === 'string' ? obj.element.fill : DEFAULT_FILL_COLOR
+  const fillColor = typeof obj.element.fill === 'string' ? obj.element.fill : DEFAULT_FILL_COLOR;
 
   if (obj.type === ELEMENT_TYPES.TEXT && obj.element instanceof Text) {
-    const textProps = getTextElementProperties(obj.element)
+    const textProps = getTextElementProperties(obj.element);
     return {
       fillColor,
       strokeColor: '',
@@ -77,15 +86,28 @@ export function getElementProperties(obj: CanvasObject): ElementProps {
       dashPattern: undefined,
       startArrow: 'none' as ArrowType,
       endArrow: UI_CONSTANTS.DEFAULT_END_ARROW,
-      ...textProps,
-    }
+      ...textProps
+    };
   }
 
-  const standardProps = getStandardElementProperties(obj)
+  if (obj.type === ELEMENT_TYPES.IMAGE && obj.element instanceof Image) {
+    const imageProps = getImageElementProperties(obj.element);
+    return {
+      fillColor,
+      strokeColor: '',
+      strokeWidth: 0,
+      dashPattern: undefined,
+      startArrow: 'none' as ArrowType,
+      endArrow: UI_CONSTANTS.DEFAULT_END_ARROW,
+      ...imageProps
+    };
+  }
+
+  const standardProps = getStandardElementProperties(obj);
   return {
     fillColor,
     ...standardProps,
     textColor: undefined,
-    fontSize: undefined,
-  }
+    fontSize: undefined
+  };
 }

@@ -25,7 +25,7 @@ export function useGroupTool() {
     let depth = 0;
     let current = element.parent;
     while (current) {
-      if (isGroup(current as UI)) {
+      if (isGroup(current as any)) {
         depth++;
       }
       current = current.parent;
@@ -41,7 +41,7 @@ export function useGroupTool() {
 
   function getParentGroup(element: UI): Group | null {
     if (!element.parent) return null;
-    if (isGroup(element.parent as UI)) {
+    if (isGroup(element.parent as any)) {
       return element.parent as Group;
     }
     return null;
@@ -90,6 +90,8 @@ export function useGroupTool() {
 
       element.x = worldX - bounds.minX;
       element.y = worldY - bounds.minY;
+      element.editable = false;
+      element.hittable = false;
 
       group.add(element);
     });
@@ -149,6 +151,8 @@ export function useGroupTool() {
 
       child.x = childX + groupX;
       child.y = childY + groupY;
+      child.editable = true;
+      child.hittable = true;
 
       parentContainer.add(child);
       restoredElements.push(child);

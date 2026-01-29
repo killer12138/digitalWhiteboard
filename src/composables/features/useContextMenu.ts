@@ -117,7 +117,7 @@ export function useContextMenu() {
 
     const canGroupValue = selectionCount >= 2;
     const canUngroupValue =
-      selectionCount === 1 && selectedElements[0] && groupTool.isGroup(selectedElements[0]);
+      selectionCount === 1 && selectedElements[0] && groupTool.isGroup(selectedElements[0] as any);
 
     menuState.value = {
       show: true,
@@ -131,7 +131,7 @@ export function useContextMenu() {
       isLocked,
       allLocked,
       canGroup: canGroupValue,
-      canUngroup: canUngroupValue
+      canUngroup: canUngroupValue ?? false
     };
   }
 

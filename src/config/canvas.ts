@@ -31,10 +31,11 @@ export const canvasConfig = {
     fontSize: 10
   },
   snap: {
-    snapSize: 15,
+    snapSize: 8,
     showDistanceLabels: true,
     showLine: true,
-    showLinePoints: true
+    showLinePoints: true,
+    attachEvents: ['move', 'scale', 'resize'] as const
   }
 } as const;
 

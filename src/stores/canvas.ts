@@ -33,11 +33,13 @@ export const useCanvasStore = defineStore('canvas', {
     fillColor: canvasConfig.theme.fill,
     strokeColor: canvasConfig.theme.stroke,
     strokeWidth: 2,
-    fontSize: 16,
+    fontSize: 32,
     textColor: canvasConfig.theme.text,
 
     rulerEnabled: canvasConfig.ruler.enabled,
-    rulerTheme: canvasConfig.ruler.theme as 'light' | 'dark'
+    rulerTheme: canvasConfig.ruler.theme as 'light' | 'dark',
+
+    guidelinesEnabled: true
   }),
 
   actions: {
@@ -135,6 +137,14 @@ export const useCanvasStore = defineStore('canvas', {
 
     setRulerTheme(theme: 'light' | 'dark') {
       this.rulerTheme = theme;
+    },
+
+    setGuidelinesEnabled(enabled: boolean) {
+      this.guidelinesEnabled = enabled;
+    },
+
+    toggleGuidelines() {
+      this.guidelinesEnabled = !this.guidelinesEnabled;
     },
 
     toSnapshot(): HistorySnapshot {

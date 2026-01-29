@@ -24,7 +24,9 @@ const DEFAULT_STROKE_WIDTH = 0;
 const DEFAULT_START_ARROW: ArrowType = 'none';
 const DEFAULT_END_ARROW: ArrowType = 'arrow';
 const DEFAULT_TEXT_COLOR = '#000000';
-const DEFAULT_FONT_SIZE = 16;
+const DEFAULT_FONT_SIZE = 32;
+const DEFAULT_IMAGE_WIDTH = 100;
+const DEFAULT_IMAGE_HEIGHT = 100;
 
 export function useElementPopover() {
   const { addSnapshot } = useHistory();
@@ -49,6 +51,8 @@ export function useElementPopover() {
   const selectedElementEndArrow = ref<ArrowType>(DEFAULT_END_ARROW);
   const selectedElementTextColor = ref<string>(DEFAULT_TEXT_COLOR);
   const selectedElementFontSize = ref<number>(DEFAULT_FONT_SIZE);
+  const selectedElementImageWidth = ref<number>(DEFAULT_IMAGE_WIDTH);
+  const selectedElementImageHeight = ref<number>(DEFAULT_IMAGE_HEIGHT);
 
   function displayPopoverAt(
     x: number,
@@ -74,7 +78,9 @@ export function useElementPopover() {
           startArrow: selectedElementStartArrow,
           endArrow: selectedElementEndArrow,
           textColor: selectedElementTextColor,
-          fontSize: selectedElementFontSize
+          fontSize: selectedElementFontSize,
+          imageWidth: selectedElementImageWidth,
+          imageHeight: selectedElementImageHeight
         };
         propertySetter.setProperties(elementProps, propertyRefs);
       }
@@ -133,6 +139,8 @@ export function useElementPopover() {
     selectedElementEndArrow,
     selectedElementTextColor,
     selectedElementFontSize,
+    selectedElementImageWidth,
+    selectedElementImageHeight,
     debouncedAddSnapshot
   });
 
@@ -151,6 +159,8 @@ export function useElementPopover() {
     selectedElementEndArrow,
     selectedElementTextColor,
     selectedElementFontSize,
+    selectedElementImageWidth,
+    selectedElementImageHeight,
 
     showPopoverAt: displayPopoverAt,
     hidePopover: closePopover,
@@ -163,6 +173,9 @@ export function useElementPopover() {
     updateElementEndArrow: propertyUpdaters.updateElementEndArrow,
     updateElementTextColor: propertyUpdaters.updateElementTextColor,
     updateElementFontSize: propertyUpdaters.updateElementFontSize,
+    updateElementImageWidth: propertyUpdaters.updateElementImageWidth,
+    updateElementImageHeight: propertyUpdaters.updateElementImageHeight,
+    replaceImageSource: propertyUpdaters.replaceImageSource,
 
     canBringForward,
     canSendBackward,

@@ -116,7 +116,7 @@ export function useLayerControl() {
   }
 
   function isVisible(element: LeaferElement): boolean {
-    return element?.visible ?? true;
+    return (element?.visible ?? true) as boolean;
   }
 
   function isLocked(element: LeaferElement): boolean {

@@ -55,7 +55,7 @@ export function useBoardConstraint() {
     const handleMove = () => {
       const selectedElements = app.editor?.list || [];
 
-      selectedElements.forEach((element: UI) => {
+      selectedElements.forEach((element: any) => {
         const parentBoard = getElementParentBoard(element);
         if (parentBoard) {
           constrainElementToBoard(element, parentBoard);
