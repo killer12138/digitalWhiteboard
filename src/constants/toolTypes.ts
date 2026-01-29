@@ -10,8 +10,9 @@ export const TOOL_TYPES = {
   LINE: 'line',
   ARROW: 'arrow',
   PEN: 'pen',
+  POLYGON: 'polygon',
   TEXT: 'text',
-  IMAGE: 'image',
-} as const
+  IMAGE: 'image'
+} as const;
 
-export type ToolTypeValue = (typeof TOOL_TYPES)[keyof typeof TOOL_TYPES]
+export type ToolTypeValue = (typeof TOOL_TYPES)[keyof typeof TOOL_TYPES];

@@ -2,13 +2,13 @@
  * Builtin plugins initialization and registration
  */
 
-import { errorHandler } from '@/utils/errorHandler'
-import { pluginRegistry } from '../registry'
-import type { LazyPluginLoader, PluginMetadataInfo, ToolPlugin } from '../types'
-import { panPlugin } from './pan'
-import { selectPlugin } from './select'
+import { errorHandler } from '@/utils/errorHandler';
+import { pluginRegistry } from '../registry';
+import type { LazyPluginLoader, PluginMetadataInfo, ToolPlugin } from '../types';
+import { panPlugin } from './pan';
+import { selectPlugin } from './select';
 
-const corePlugins: ToolPlugin[] = [selectPlugin, panPlugin]
+const corePlugins: ToolPlugin[] = [selectPlugin, panPlugin];
 
 const lazyPluginMetadata: PluginMetadataInfo[] = [
   {
@@ -17,14 +17,14 @@ const lazyPluginMetadata: PluginMetadataInfo[] = [
     type: 'rect',
     metadata: {
       version: '1.0.0',
-      description: 'Rectangle drawing tool',
+      description: 'Rectangle drawing tool'
     },
     category: 'drawing',
     ui: {
       label: '矩形工具',
-      iconComponent: 'i-lucide-square',
+      iconComponent: 'i-lucide-square'
     },
-    shortcut: 'KeyR',
+    shortcut: 'KeyR'
   },
   {
     id: 'circle',
@@ -32,14 +32,14 @@ const lazyPluginMetadata: PluginMetadataInfo[] = [
     type: 'circle',
     metadata: {
       version: '1.0.0',
-      description: 'Circle drawing tool',
+      description: 'Circle drawing tool'
     },
     category: 'drawing',
     ui: {
       label: '圆形工具',
-      iconComponent: 'i-lucide-circle',
+      iconComponent: 'i-lucide-circle'
     },
-    shortcut: 'KeyC',
+    shortcut: 'KeyC'
   },
   {
     id: 'line',
@@ -47,14 +47,14 @@ const lazyPluginMetadata: PluginMetadataInfo[] = [
     type: 'line',
     metadata: {
       version: '1.0.0',
-      description: 'Line drawing tool',
+      description: 'Line drawing tool'
     },
     category: 'drawing',
     ui: {
       label: '直线工具',
-      iconComponent: 'i-lucide-minus',
+      iconComponent: 'i-lucide-minus'
     },
-    shortcut: 'KeyL',
+    shortcut: 'KeyL'
   },
   {
     id: 'arrow',
@@ -62,14 +62,14 @@ const lazyPluginMetadata: PluginMetadataInfo[] = [
     type: 'arrow',
     metadata: {
       version: '1.0.0',
-      description: 'Arrow drawing tool',
+      description: 'Arrow drawing tool'
     },
     category: 'drawing',
     ui: {
       label: '箭头工具',
-      iconComponent: 'i-lucide-arrow-right',
+      iconComponent: 'i-lucide-arrow-right'
     },
-    shortcut: 'KeyA',
+    shortcut: 'KeyA'
   },
   {
     id: 'pen',
@@ -77,15 +77,30 @@ const lazyPluginMetadata: PluginMetadataInfo[] = [
     type: 'pen',
     metadata: {
       version: '1.0.0',
-      description: 'Freehand pen drawing tool',
+      description: 'Freehand pen drawing tool'
     },
     category: 'drawing',
     ui: {
       label: '画笔工具',
-      iconComponent: 'i-lucide-pen-tool',
-      dividerAfter: true,
+      iconComponent: 'i-lucide-pen-tool'
     },
-    shortcut: 'KeyP',
+    shortcut: 'KeyP'
+  },
+  {
+    id: 'polygon',
+    name: 'Polygon Tool',
+    type: 'polygon',
+    metadata: {
+      version: '1.0.0',
+      description: 'Create custom polygon shapes by clicking to add points'
+    },
+    category: 'drawing',
+    ui: {
+      label: '多边形工具',
+      iconComponent: 'i-lucide-pentagon',
+      dividerAfter: true
+    },
+    shortcut: 'KeyG'
   },
   {
     id: 'text',
@@ -93,14 +108,14 @@ const lazyPluginMetadata: PluginMetadataInfo[] = [
     type: 'text',
     metadata: {
       version: '1.0.0',
-      description: 'Text tool for adding text to canvas',
+      description: 'Text tool for adding text to canvas'
     },
     category: 'drawing',
     ui: {
       label: '文本工具',
-      iconComponent: 'i-lucide-type',
+      iconComponent: 'i-lucide-type'
     },
-    shortcut: 'KeyT',
+    shortcut: 'KeyT'
   },
   {
     id: 'image',
@@ -108,13 +123,13 @@ const lazyPluginMetadata: PluginMetadataInfo[] = [
     type: 'image',
     metadata: {
       version: '1.0.0',
-      description: 'Image tool for adding images to canvas',
+      description: 'Image tool for adding images to canvas'
     },
     category: 'drawing',
     ui: {
       label: '图片工具',
-      iconComponent: 'i-lucide-image',
-    },
+      iconComponent: 'i-lucide-image'
+    }
   },
   {
     id: 'export',
@@ -122,14 +137,14 @@ const lazyPluginMetadata: PluginMetadataInfo[] = [
     type: 'export',
     metadata: {
       version: '1.0.0',
-      description: 'Export canvas as image',
+      description: 'Export canvas as image'
     },
     category: 'utility',
     ui: {
       label: '导出图片',
-      iconComponent: 'i-lucide-image-down',
+      iconComponent: 'i-lucide-image-down'
     },
-    shortcut: 'Shift+KeyE',
+    shortcut: 'Shift+KeyE'
   },
   {
     id: 'exportJson',
@@ -137,14 +152,14 @@ const lazyPluginMetadata: PluginMetadataInfo[] = [
     type: 'exportJson',
     metadata: {
       version: '1.0.0',
-      description: 'Export canvas as JSON',
+      description: 'Export canvas as JSON'
     },
     category: 'utility',
     ui: {
       label: '导出 JSON',
-      iconComponent: 'i-lucide-file-braces-corner',
+      iconComponent: 'i-lucide-file-braces-corner'
     },
-    shortcut: 'Shift+KeyJ',
+    shortcut: 'Shift+KeyJ'
   },
   {
     id: 'undo',
@@ -152,14 +167,14 @@ const lazyPluginMetadata: PluginMetadataInfo[] = [
     type: 'undo',
     metadata: {
       version: '1.0.0',
-      description: 'Undo the last canvas operation',
+      description: 'Undo the last canvas operation'
     },
     category: 'utility',
     ui: {
       label: '撤销',
-      iconComponent: 'i-lucide-undo-2',
+      iconComponent: 'i-lucide-undo-2'
     },
-    shortcut: 'Ctrl+KeyZ',
+    shortcut: 'Ctrl+KeyZ'
   },
   {
     id: 'redo',
@@ -167,14 +182,14 @@ const lazyPluginMetadata: PluginMetadataInfo[] = [
     type: 'redo',
     metadata: {
       version: '1.0.0',
-      description: 'Redo the last undone operation',
+      description: 'Redo the last undone operation'
     },
     category: 'utility',
     ui: {
       label: '重做',
-      iconComponent: 'i-lucide-redo-2',
+      iconComponent: 'i-lucide-redo-2'
     },
-    shortcut: 'Ctrl+Shift+KeyZ',
+    shortcut: 'Ctrl+Shift+KeyZ'
   },
   {
     id: 'zoomIn',
@@ -182,14 +197,14 @@ const lazyPluginMetadata: PluginMetadataInfo[] = [
     type: 'zoomIn',
     metadata: {
       version: '1.0.0',
-      description: 'Zoom in the canvas',
+      description: 'Zoom in the canvas'
     },
     category: 'utility',
     ui: {
       label: '放大',
-      iconComponent: 'i-lucide-zoom-in',
+      iconComponent: 'i-lucide-zoom-in'
     },
-    shortcut: 'Ctrl+Equal',
+    shortcut: 'Ctrl+Equal'
   },
   {
     id: 'zoomOut',
@@ -197,16 +212,16 @@ const lazyPluginMetadata: PluginMetadataInfo[] = [
     type: 'zoomOut',
     metadata: {
       version: '1.0.0',
-      description: 'Zoom out the canvas',
+      description: 'Zoom out the canvas'
     },
     category: 'utility',
     ui: {
       label: '缩小',
-      iconComponent: 'i-lucide-zoom-out',
+      iconComponent: 'i-lucide-zoom-out'
     },
-    shortcut: 'Ctrl+Minus',
-  },
-]
+    shortcut: 'Ctrl+Minus'
+  }
+];
 
 const lazyPluginLoaders: Map<string, LazyPluginLoader> = new Map([
   ['rect', async () => (await import('./rect')).rectPlugin],
@@ -214,6 +229,7 @@ const lazyPluginLoaders: Map<string, LazyPluginLoader> = new Map([
   ['line', async () => (await import('./line')).linePlugin],
   ['arrow', async () => (await import('./arrow')).arrowPlugin],
   ['pen', async () => (await import('./pen')).penPlugin],
+  ['polygon', async () => (await import('./polygon')).polygonPlugin],
   ['text', async () => (await import('./text')).textPlugin],
   ['image', async () => (await import('./image')).imagePlugin],
   ['export', async () => (await import('./export')).exportPlugin],
@@ -221,13 +237,13 @@ const lazyPluginLoaders: Map<string, LazyPluginLoader> = new Map([
   ['undo', async () => (await import('./undo')).undoPlugin],
   ['redo', async () => (await import('./redo')).redoPlugin],
   ['zoomIn', async () => (await import('./zoomIn')).zoomInPlugin],
-  ['zoomOut', async () => (await import('./zoomOut')).zoomOutPlugin],
-])
+  ['zoomOut', async () => (await import('./zoomOut')).zoomOutPlugin]
+]);
 
 export async function initializeBuiltinPlugins(): Promise<void> {
   for (const plugin of corePlugins) {
     try {
-      await pluginRegistry.register(plugin)
+      await pluginRegistry.register(plugin);
     } catch (error) {
       errorHandler.handlePluginError(
         plugin.id,
@@ -235,17 +251,17 @@ export async function initializeBuiltinPlugins(): Promise<void> {
         error instanceof Error ? error : undefined,
         {
           pluginName: plugin.name,
-          operation: 'register',
+          operation: 'register'
         }
-      )
+      );
     }
   }
 
   for (const metadata of lazyPluginMetadata) {
-    const loader = lazyPluginLoaders.get(metadata.id)
+    const loader = lazyPluginLoaders.get(metadata.id);
     if (loader) {
       try {
-        await pluginRegistry.register(loader, metadata)
+        await pluginRegistry.register(loader, metadata);
       } catch (error) {
         errorHandler.handlePluginError(
           metadata.id,
@@ -253,20 +269,20 @@ export async function initializeBuiltinPlugins(): Promise<void> {
           error instanceof Error ? error : undefined,
           {
             pluginName: metadata.name,
-            operation: 'register',
+            operation: 'register'
           }
-        )
+        );
       }
     } else {
-      errorHandler.warn(`Lazy loader not found for plugin "${metadata.id}"`)
+      errorHandler.warn(`Lazy loader not found for plugin "${metadata.id}"`);
     }
   }
 }
 
 export async function initializePiniaDependentPlugins(): Promise<void> {
-  const { historyCachePlugin } = await import('./historyCache')
+  const { historyCachePlugin } = await import('./historyCache');
   try {
-    await pluginRegistry.register(historyCachePlugin)
+    await pluginRegistry.register(historyCachePlugin);
   } catch (error) {
     errorHandler.handlePluginError(
       historyCachePlugin.id,
@@ -274,8 +290,8 @@ export async function initializePiniaDependentPlugins(): Promise<void> {
       error instanceof Error ? error : undefined,
       {
         pluginName: historyCachePlugin.name,
-        operation: 'register',
+        operation: 'register'
       }
-    )
+    );
   }
 }

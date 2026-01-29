@@ -23,7 +23,12 @@
   const renamingBoardId = ref<string | null>(null);
   const newBoardName = ref('');
 
-  function handleBoardCreate(options: { name: string; width: number; height: number }) {
+  function handleBoardCreate(options: {
+    name: string;
+    width: number;
+    height: number;
+    backgroundColor: string;
+  }) {
     boardManager.createBoard(options);
   }
 
@@ -59,11 +64,11 @@
 
 <template>
   <n-config-provider :theme-overrides="themeOverrides">
-    <div class="w-screen h-screen flex flex-col bg-gray-50">
+    <div class="w-screen h-screen flex flex-col bg-gray-100">
       <Toolbar />
-      <div class="flex-1 relative overflow-hidden pt-0">
-        <Canvas />
-        <div class="absolute left-4 top-4 z-40">
+
+      <div class="flex-1 flex overflow-hidden">
+        <aside class="w-52 shrink-0 bg-white border-r border-gray-200 p-3 overflow-y-auto">
           <BoardPanel
             :boards="boardManager.boards.value"
             :active-board-id="boardManager.activeBoardId.value"
@@ -73,9 +78,22 @@
             @duplicate="handleBoardDuplicate"
             @rename="handleBoardRename"
           />
-        </div>
+        </aside>
+
+        <main class="flex-1 relative overflow-hidden">
+          <Canvas />
+          <div class="absolute bottom-4 right-4 z-40">
+            <ZoomControls />
+          </div>
+        </main>
+
+        <aside class="w-56 shrink-0 bg-white border-l border-gray-200 overflow-y-auto">
+          <PropertiesPanel />
+        </aside>
       </div>
+
       <BoardCreator v-model:show="boardManager.showCreateDialog.value" @create="handleBoardCreate" />
+
       <n-modal
         :show="renamingBoardId !== null"
         preset="dialog"

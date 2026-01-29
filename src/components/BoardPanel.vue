@@ -65,58 +65,62 @@
 </script>
 
 <template>
-  <div
-    class="flex flex-col gap-2 p-2 bg-white/80 backdrop-blur-md rounded-lg shadow-sm border border-gray-200/50"
-  >
-    <div class="flex items-center justify-between px-2">
-      <span class="text-sm font-medium text-gray-700">画板</span>
-      <n-button size="tiny" quaternary circle @click="handleCreateBoard">
+  <div class="flex flex-col gap-3">
+    <div class="flex items-center justify-between">
+      <span class="text-sm font-medium text-gray-700">画板列表</span>
+      <n-button size="tiny" quaternary circle @click="handleCreateBoard" title="新建画板">
         <template #icon>
-          <IconRenderer name="i-lucide-plus" class="text-xs" />
+          <IconRenderer name="i-lucide-plus" class="text-xs text-gray-500" />
         </template>
       </n-button>
     </div>
 
-    <div v-if="boards.length === 0" class="text-xs text-gray-400 text-center py-4">暂无画板</div>
+    <div v-if="boards.length === 0" class="text-xs text-gray-400 text-center py-6 bg-gray-50 rounded-lg">
+      点击 + 新建画板
+    </div>
 
-    <div v-else class="flex flex-col gap-1 max-h-[200px] overflow-y-auto">
+    <div v-else class="flex flex-col gap-1">
       <div
         v-for="board in boards"
         :key="board.id"
-        class="group flex items-center justify-between px-2 py-1.5 rounded cursor-pointer transition-colors"
-        :class="[board.id === activeBoardId ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100 text-gray-700']"
+        class="group flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer transition-all"
+        :class="[
+          board.id === activeBoardId
+            ? 'bg-blue-50 text-blue-600 ring-1 ring-blue-200'
+            : 'hover:bg-gray-50 text-gray-700'
+        ]"
         @click="handleBoardSelect(board.id)"
       >
-        <div class="flex items-center gap-2 flex-1 min-w-0">
+        <div class="flex items-center gap-2.5 flex-1 min-w-0">
           <IconRenderer
             name="i-lucide-frame"
             class="text-sm shrink-0"
             :class="board.id === activeBoardId ? 'text-blue-500' : 'text-gray-400'"
           />
-          <span class="text-xs truncate">{{ board.name }}</span>
+          <div class="flex flex-col flex-1 min-w-0">
+            <span class="text-xs font-medium truncate">{{ board.name }}</span>
+            <span class="text-[10px] text-gray-400">{{ board.width }} × {{ board.height }}</span>
+          </div>
         </div>
 
-        <div class="flex items-center gap-1">
-          <span class="text-[10px] text-gray-400">{{ board.width }}x{{ board.height }}</span>
-          <n-dropdown
-            :options="getBoardMenuOptions()"
-            trigger="click"
-            size="small"
-            @select="key => handleBoardMenuSelect(key as string, board)"
+        <n-dropdown
+          :options="getBoardMenuOptions()"
+          trigger="click"
+          size="small"
+          @select="key => handleBoardMenuSelect(key as string, board)"
+        >
+          <n-button
+            size="tiny"
+            quaternary
+            circle
+            class="opacity-0 group-hover:opacity-100 transition-opacity"
+            @click.stop
           >
-            <n-button
-              size="tiny"
-              quaternary
-              circle
-              class="opacity-0 group-hover:opacity-100 transition-opacity"
-              @click.stop
-            >
-              <template #icon>
-                <IconRenderer name="i-lucide-more-horizontal" class="text-xs" />
-              </template>
-            </n-button>
-          </n-dropdown>
-        </div>
+            <template #icon>
+              <IconRenderer name="i-lucide-more-horizontal" class="text-xs" />
+            </template>
+          </n-button>
+        </n-dropdown>
       </div>
     </div>
   </div>

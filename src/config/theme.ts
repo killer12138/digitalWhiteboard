@@ -1,18 +1,46 @@
 /**
- * Theme color configuration for the application
+ * Theme color configuration for the application.
+ * Unified color palette for consistent UI styling.
  */
 
 export const themeColors = {
-  primary: '#4FC3F7',
-  primaryHover: '#29B6F6',
-  primaryPressed: '#03A9F4',
-  primarySuppl: '#81D4FA',
+  primary: '#3B82F6',
+  primaryHover: '#2563EB',
+  primaryPressed: '#1D4ED8',
+  primarySuppl: '#60A5FA',
 
-  secondary: '#FFD243',
+  secondary: '#F59E0B',
 
-  text: '#000000',
+  text: '#1F2937',
+  textMuted: '#6B7280',
+  textLight: '#9CA3AF',
 
-  background: '#F5F5F5',
-}
+  background: '#F3F4F6',
+  backgroundWhite: '#FFFFFF',
+  backgroundHover: '#F9FAFB',
 
-export type ThemeColors = typeof themeColors
+  border: '#E5E7EB',
+  borderLight: '#F3F4F6',
+
+  success: '#10B981',
+  warning: '#F59E0B',
+  error: '#EF4444',
+  info: '#3B82F6'
+};
+
+export const layoutColors = {
+  toolbar: {
+    background: themeColors.backgroundWhite,
+    border: themeColors.border
+  },
+  sidebar: {
+    background: themeColors.backgroundWhite,
+    border: themeColors.border
+  },
+  canvas: {
+    background: themeColors.background
+  }
+};
+
+export type ThemeColors = typeof themeColors;
+export type LayoutColors = typeof layoutColors;

@@ -1,16 +1,17 @@
 <script setup lang="ts">
+  import type { Group } from 'leafer-ui';
   import { App } from 'leafer-ui';
   import { inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-  import type { ArrowType } from '@/components/common/ArrowPicker.vue';
+  import { useBoardConstraint } from '@/composables/features/useBoardConstraint';
   import { useContextMenu } from '@/composables/features/useContextMenu';
   import { useDeleteTool } from '@/composables/features/useDeleteTool';
+  import { useGroupTool } from '@/composables/features/useGroupTool';
   import { useElementPopover } from '@/composables/state/useElementPopover';
   import { useCanvasTools } from '@/composables/useCanvasTools';
   import { canvasConfig } from '@/config/canvas';
   import { useZoomTool } from '@/plugins/composables/useZoomTool';
   import { useCanvasStore } from '@/stores/canvas';
   import { useHistoryStore } from '@/stores/history';
-  import { calculateDashPattern } from '@/utils/stroke';
 
   import '@leafer-in/editor';
   import '@leafer-in/export';
@@ -27,61 +28,28 @@
   const { setupZoomKeyboardPrevention } = useZoomTool();
   const elementPopover = inject<ReturnType<typeof useElementPopover>>('elementPopover', useElementPopover());
   const contextMenu = useContextMenu();
+  const groupTool = useGroupTool();
+  const boardConstraint = useBoardConstraint();
 
   let app: App | null = null;
   let ruler: Ruler | null = null;
   let deleteToolCleanup: (() => void) | null = null;
   let zoomKeyboardCleanup: (() => void) | null = null;
-
-  const handleStrokeTypeChange = (type: 'solid' | 'dashed') => {
-    if (type === 'dashed') {
-      const currentStrokeWidth = elementPopover.selectedElementStrokeWidth.value;
-      elementPopover.updateElementDashPattern(calculateDashPattern(currentStrokeWidth));
-    } else {
-      elementPopover.updateElementDashPattern(undefined);
-    }
-  };
-
-  const handleFillColorUpdate = (color: string) => {
-    elementPopover.updateElementFillColor(color);
-  };
-
-  const handleStrokeColorUpdate = (color: string) => {
-    elementPopover.updateElementStrokeColor(color);
-  };
-
-  const handleStrokeWidthUpdate = (width: number) => {
-    const hasDashedStroke = elementPopover.selectedElementDashPattern.value;
-    const dashPattern = hasDashedStroke ? calculateDashPattern(width) : undefined;
-    elementPopover.updateElementStrokeWidth(width, dashPattern);
-  };
-
-  const handleStartArrowUpdate = (arrowType: ArrowType) => {
-    elementPopover.updateElementStartArrow(arrowType);
-  };
-
-  const handleEndArrowUpdate = (arrowType: ArrowType) => {
-    elementPopover.updateElementEndArrow(arrowType);
-  };
-
-  const handleTextColorUpdate = (color: string) => {
-    elementPopover.updateElementTextColor(color);
-  };
-
-  const handleFontSizeUpdate = (size: number) => {
-    elementPopover.updateElementFontSize(size);
-  };
+  let boardConstraintCleanup: (() => void) | null = null;
 
   const handleContextMenu = (event: MouseEvent) => {
     event.preventDefault();
 
-    const app = store.appInstance;
-    if (!app?.editor) return;
+    const currentApp = store.appInstance;
+    if (!currentApp) return;
 
-    const selectedElements = app.editor.list || [];
-    const targetElement = selectedElements.length > 0 ? selectedElements[0] : null;
+    const rect = canvasContainer.value?.getBoundingClientRect();
+    if (!rect) return;
 
-    contextMenu.showContextMenu(event.clientX, event.clientY, targetElement as any);
+    const canvasX = (event.clientX - rect.left) / (currentApp.tree.scale as number);
+    const canvasY = (event.clientY - rect.top) / (currentApp.tree.scale as number);
+
+    contextMenu.showContextMenu(event.clientX, event.clientY, canvasX, canvasY);
   };
 
   const restoreCanvasFromHistory = () => {
@@ -89,6 +57,36 @@
       const lastSnapshot = historyStore.snapshots[historyStore.currentIndex];
       if (lastSnapshot) {
         store.fromSnapshot(lastSnapshot);
+      }
+    }
+  };
+
+  const handleDoubleClick = () => {
+    const currentApp = store.appInstance;
+    if (!currentApp?.editor) return;
+
+    const selectedElements = currentApp.editor.list || [];
+    if (selectedElements.length !== 1) return;
+
+    const selectedElement = selectedElements[0];
+    if (selectedElement && groupTool.isGroup(selectedElement)) {
+      groupTool.enterGroupEdit(selectedElement as Group);
+
+      const children = selectedElement.children || [];
+      if (children.length > 0) {
+        currentApp.editor.select(children[0]);
+      }
+    }
+  };
+
+  const handleCanvasClick = (event: MouseEvent) => {
+    if (groupTool.isEditingGroup()) {
+      const currentApp = store.appInstance;
+      if (!currentApp?.editor) return;
+
+      const target = event.target as HTMLElement;
+      if (target === canvasContainer.value) {
+        groupTool.exitGroupEdit();
       }
     }
   };
@@ -124,6 +122,10 @@
 
     const snap = new Snap(app, {
       attachEvents: ['move', 'scale'],
+      snapSize: canvasConfig.snap.snapSize,
+      showDistanceLabels: canvasConfig.snap.showDistanceLabels,
+      showLine: canvasConfig.snap.showLine,
+      showLinePoints: canvasConfig.snap.showLinePoints,
       lineColor: canvasConfig.theme.snapLineColor,
       distanceLabelStyle: {
         text: {
@@ -143,6 +145,10 @@
       fontSize: canvasConfig.ruler.fontSize,
       unit: canvasConfig.ruler.unit
     });
+
+    app.tree.on('double_tap', handleDoubleClick);
+
+    boardConstraintCleanup = boardConstraint.setupMoveConstraint(app);
 
     restoreCanvasFromHistory();
   });
@@ -168,6 +174,7 @@
   onBeforeUnmount(() => {
     zoomKeyboardCleanup?.();
     deleteToolCleanup?.();
+    boardConstraintCleanup?.();
 
     ruler = null;
 
@@ -183,42 +190,14 @@
     ref="canvasContainer"
     class="w-full h-full relative overflow-hidden bg-white"
     @contextmenu="handleContextMenu"
+    @click="handleCanvasClick"
   >
-    <n-popover
-      :show="elementPopover.showPopover.value"
-      :x="elementPopover.popoverX.value"
-      :y="elementPopover.popoverY.value"
-      :show-arrow="false"
-      :content-style="{ display: 'flex' }"
-      placement="right-start"
-      trigger="manual"
+    <div
+      v-if="groupTool.isEditingGroup()"
+      class="absolute top-2 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 bg-blue-500 text-white text-xs rounded-full shadow-md"
     >
-      <ElementStyleConfig
-        :element-type="elementPopover.selectedElementType.value"
-        :fill-color="elementPopover.selectedElementFillColor.value"
-        :stroke-color="elementPopover.selectedElementStrokeColor.value"
-        :stroke-width="elementPopover.selectedElementStrokeWidth.value"
-        :dash-pattern="elementPopover.selectedElementDashPattern.value"
-        :start-arrow="elementPopover.selectedElementStartArrow.value"
-        :end-arrow="elementPopover.selectedElementEndArrow.value"
-        :text-color="elementPopover.selectedElementTextColor.value"
-        :font-size="elementPopover.selectedElementFontSize.value"
-        :can-bring-forward="elementPopover.canBringForward.value"
-        :can-send-backward="elementPopover.canSendBackward.value"
-        @update:fill-color="handleFillColorUpdate"
-        @update:stroke-color="handleStrokeColorUpdate"
-        @update:stroke-width="handleStrokeWidthUpdate"
-        @update:stroke-type="handleStrokeTypeChange"
-        @update:start-arrow="handleStartArrowUpdate"
-        @update:end-arrow="handleEndArrowUpdate"
-        @update:text-color="handleTextColorUpdate"
-        @update:font-size="handleFontSizeUpdate"
-        @bring-forward="elementPopover.bringElementForward"
-        @send-backward="elementPopover.sendElementBackward"
-        @bring-to-front="elementPopover.bringElementToFront"
-        @send-to-back="elementPopover.sendElementToBack"
-      />
-    </n-popover>
+      编辑组内元素 · 点击空白区域退出
+    </div>
     <ContextMenu
       v-model:show="contextMenu.menuState.value.show"
       :x="contextMenu.menuState.value.x"
@@ -239,7 +218,6 @@
       @bring-to-front="contextMenu.handleBringToFront"
       @send-to-back="contextMenu.handleSendToBack"
       @select-all="contextMenu.handleSelectAll"
-      @lock-toggle="contextMenu.handleLockToggle"
     />
   </div>
 </template>

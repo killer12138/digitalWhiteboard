@@ -45,15 +45,17 @@ export const useBoardStore = defineStore('board', {
 
       const boardX = options.x ?? this.boards.length * 50;
       const boardY = options.y ?? this.boards.length * 50;
+      const bgColor = options.backgroundColor || '#ffffff';
 
       const frame = new Frame({
         x: boardX,
         y: boardY,
         width: options.width || DEFAULT_BOARD_SIZE.width,
         height: options.height || DEFAULT_BOARD_SIZE.height,
-        fill: '#ffffff',
+        fill: bgColor === 'transparent' ? undefined : bgColor,
         editable: true,
-        draggable: true
+        draggable: true,
+        overflow: 'hide'
       });
 
       app.tree.add(frame);
@@ -65,6 +67,7 @@ export const useBoardStore = defineStore('board', {
         height: options.height || DEFAULT_BOARD_SIZE.height,
         x: boardX,
         y: boardY,
+        backgroundColor: bgColor,
         frame,
         objects: [],
         createdAt: now,

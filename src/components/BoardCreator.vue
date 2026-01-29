@@ -8,7 +8,7 @@
 
   interface Emits {
     (e: 'update:show', value: boolean): void;
-    (e: 'create', options: { name: string; width: number; height: number }): void;
+    (e: 'create', options: { name: string; width: number; height: number; backgroundColor: string }): void;
   }
 
   defineProps<Props>();
@@ -18,6 +18,14 @@
   const selectedPreset = ref<BoardPreset>(BOARD_PRESETS[4]!);
   const customWidth = ref(DEFAULT_BOARD_SIZE.width);
   const customHeight = ref(DEFAULT_BOARD_SIZE.height);
+  const backgroundColor = ref('#ffffff');
+
+  const backgroundColorOptions = [
+    { label: '白色', value: '#ffffff' },
+    { label: '黑色', value: '#000000' },
+    { label: '灰色', value: '#f5f5f5' },
+    { label: '透明', value: 'transparent' }
+  ];
 
   const isCustomSize = computed(() => selectedPreset.value?.name === '自定义');
 
@@ -49,7 +57,8 @@
     emit('create', {
       name: boardName.value || '未命名画板',
       width: finalWidth.value,
-      height: finalHeight.value
+      height: finalHeight.value,
+      backgroundColor: backgroundColor.value
     });
     resetForm();
   }
@@ -64,6 +73,7 @@
     selectedPreset.value = BOARD_PRESETS[4]!;
     customWidth.value = DEFAULT_BOARD_SIZE.width;
     customHeight.value = DEFAULT_BOARD_SIZE.height;
+    backgroundColor.value = '#ffffff';
   }
 </script>
 
@@ -100,7 +110,35 @@
         </div>
       </div>
 
-      <div class="text-sm text-gray-500">画板尺寸: {{ finalWidth }} x {{ finalHeight }} px</div>
+      <div class="flex flex-col gap-2">
+        <label class="text-sm text-gray-600">背景颜色</label>
+        <div class="flex items-center gap-2">
+          <n-select v-model:value="backgroundColor" :options="backgroundColorOptions" class="flex-1" />
+          <n-color-picker
+            v-model:value="backgroundColor"
+            :show-alpha="true"
+            :modes="['hex']"
+            size="small"
+            style="width: 80px"
+          />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+        <div
+          class="w-16 h-12 rounded border border-gray-300 shadow-inner"
+          :style="{
+            backgroundColor:
+              backgroundColor === 'transparent'
+                ? 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 8px 8px'
+                : backgroundColor
+          }"
+        />
+        <div class="text-sm text-gray-500">
+          <div>尺寸: {{ finalWidth }} x {{ finalHeight }} px</div>
+          <div>背景: {{ backgroundColor }}</div>
+        </div>
+      </div>
     </div>
   </n-modal>
 </template>

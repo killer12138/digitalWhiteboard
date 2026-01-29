@@ -27,7 +27,6 @@
     (e: 'bringToFront'): void;
     (e: 'sendToBack'): void;
     (e: 'selectAll'): void;
-    (e: 'lockToggle'): void;
   }
 
   const props = defineProps<Props>();
@@ -107,20 +106,12 @@
         options.push({ type: 'divider', key: 'd2' });
       }
 
-      options.push(
-        {
-          label: '图层',
-          key: 'layer',
-          icon: () => h(IconRenderer, { name: 'i-lucide-layers', size: 14 }),
-          children: layerSubmenu.value
-        },
-        { type: 'divider', key: 'd3' },
-        {
-          label: '锁定/解锁',
-          key: 'lockToggle',
-          icon: () => h(IconRenderer, { name: 'i-lucide-lock', size: 14 })
-        }
-      );
+      options.push({
+        label: '图层',
+        key: 'layer',
+        icon: () => h(IconRenderer, { name: 'i-lucide-layers', size: 14 }),
+        children: layerSubmenu.value
+      });
     }
 
     options.push(
@@ -166,9 +157,6 @@
         break;
       case 'selectAll':
         emit('selectAll');
-        break;
-      case 'lockToggle':
-        emit('lockToggle');
         break;
     }
     emit('update:show', false);

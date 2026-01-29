@@ -1,11 +1,15 @@
 /**
- * Group tool composable for grouping and ungrouping elements
+ * Group tool composable for grouping and ungrouping elements.
+ * Supports nested groups (group of groups) like Photoshop.
  */
 
 import { Group, type UI } from 'leafer-ui';
+import { ref } from 'vue';
 import { useHistory } from '@/plugins/composables/useHistory';
 import { useCanvasStore } from '@/stores/canvas';
 import type { LeaferElement } from '@/types';
+
+const editingGroup = ref<Group | null>(null);
 
 export function useGroupTool() {
   const store = useCanvasStore();
@@ -16,10 +20,31 @@ export function useGroupTool() {
     return element.tag === 'Group';
   }
 
+  function getGroupDepth(element: UI | null): number {
+    if (!element) return 0;
+    let depth = 0;
+    let current = element.parent;
+    while (current) {
+      if (isGroup(current as UI)) {
+        depth++;
+      }
+      current = current.parent;
+    }
+    return depth;
+  }
+
   function getSelectedElements(): UI[] {
     const app = store.appInstance;
     if (!app?.editor) return [];
     return (app.editor.list as UI[]) || [];
+  }
+
+  function getParentGroup(element: UI): Group | null {
+    if (!element.parent) return null;
+    if (isGroup(element.parent as UI)) {
+      return element.parent as Group;
+    }
+    return null;
   }
 
   function groupElements(): Group | null {
@@ -55,6 +80,8 @@ export function useGroupTool() {
 
     app.editor.cancel();
 
+    const parentContainer = elementsToGroup[0]?.parent || app.tree;
+
     elementsToGroup.forEach(element => {
       const worldX = element.x ?? 0;
       const worldY = element.y ?? 0;
@@ -67,7 +94,7 @@ export function useGroupTool() {
       group.add(element);
     });
 
-    app.tree.add(group);
+    parentContainer.add(group);
 
     const groupId = `group-${Date.now()}`;
     store.addObject({
@@ -110,6 +137,8 @@ export function useGroupTool() {
 
     app.editor.cancel();
 
+    const parentContainer = group.parent || app.tree;
+
     const restoredElements: UI[] = [];
 
     children.forEach(child => {
@@ -121,7 +150,7 @@ export function useGroupTool() {
       child.x = childX + groupX;
       child.y = childY + groupY;
 
-      app.tree.add(child);
+      parentContainer.add(child);
       restoredElements.push(child);
 
       const childId = `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -140,7 +169,7 @@ export function useGroupTool() {
       store.objects.splice(groupObjIndex, 1);
     }
 
-    app.tree.remove(group);
+    parentContainer.remove(group);
 
     if (restoredElements.length > 0) {
       app.editor.select(restoredElements);
@@ -149,6 +178,23 @@ export function useGroupTool() {
     addSnapshot();
 
     return restoredElements;
+  }
+
+  function enterGroupEdit(group: Group): void {
+    if (!isGroup(group)) return;
+    editingGroup.value = group;
+  }
+
+  function exitGroupEdit(): void {
+    editingGroup.value = null;
+  }
+
+  function isEditingGroup(): boolean {
+    return editingGroup.value !== null;
+  }
+
+  function getEditingGroup(): Group | null {
+    return editingGroup.value;
   }
 
   function canGroup(): boolean {
@@ -169,6 +215,13 @@ export function useGroupTool() {
     ungroupElements,
     canGroup,
     canUngroup,
-    getSelectedElements
+    getSelectedElements,
+    getGroupDepth,
+    getParentGroup,
+    enterGroupEdit,
+    exitGroupEdit,
+    isEditingGroup,
+    getEditingGroup,
+    editingGroup
   };
 }

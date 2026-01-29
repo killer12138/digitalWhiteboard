@@ -12,6 +12,7 @@ export interface Board {
   height: number;
   x: number;
   y: number;
+  backgroundColor: string;
   frame: Frame | null;
   objects: CanvasObject[];
   createdAt: string;
@@ -24,6 +25,7 @@ export interface BoardCreateOptions {
   height: number;
   x?: number;
   y?: number;
+  backgroundColor?: string;
 }
 
 export interface BoardUpdateOptions {

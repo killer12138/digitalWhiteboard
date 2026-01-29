@@ -2,7 +2,7 @@
  * Tool type definitions and type guards
  */
 
-import { TOOL_TYPES } from '@/constants'
+import { TOOL_TYPES } from '@/constants';
 
 export type ToolType =
   | 'select'
@@ -12,8 +12,9 @@ export type ToolType =
   | 'line'
   | 'arrow'
   | 'pen'
+  | 'polygon'
   | 'text'
-  | 'image'
+  | 'image';
 
 const VALID_TOOL_TYPES: readonly ToolType[] = [
   TOOL_TYPES.SELECT,
@@ -23,10 +24,11 @@ const VALID_TOOL_TYPES: readonly ToolType[] = [
   TOOL_TYPES.LINE,
   TOOL_TYPES.ARROW,
   TOOL_TYPES.PEN,
+  TOOL_TYPES.POLYGON,
   TOOL_TYPES.TEXT,
-  TOOL_TYPES.IMAGE,
-] as const
+  TOOL_TYPES.IMAGE
+] as const;
 
 export function isValidToolType(type: string): type is ToolType {
-  return VALID_TOOL_TYPES.includes(type as ToolType)
+  return VALID_TOOL_TYPES.includes(type as ToolType);
 }

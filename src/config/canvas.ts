@@ -1,5 +1,5 @@
 /**
- * Canvas configuration constants for zoom, wheel, ruler, and other canvas settings
+ * Canvas configuration constants for zoom, wheel, ruler, snap, and other canvas settings
  */
 
 import { themeColors } from './theme';
@@ -29,6 +29,12 @@ export const canvasConfig = {
     unit: 'px' as string,
     ruleSize: 20,
     fontSize: 10
+  },
+  snap: {
+    snapSize: 15,
+    showDistanceLabels: true,
+    showLine: true,
+    showLinePoints: true
   }
 } as const;
 
